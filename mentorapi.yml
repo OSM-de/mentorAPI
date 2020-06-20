@@ -1,0 +1,2 @@
+redirectToAfterLogin: http://localhost:8080/loggedIn.html
+redirectToAfterLogout: http://localhost:8080/loggedOut.html

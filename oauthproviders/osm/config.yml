@@ -1,0 +1,6 @@
+accessTokenURL: https://www.openstreetmap.org/oauth/access_token
+userDetails: https://api.openstreetmap.org/api/0.6/user/details
+requestTokenURL: https://www.openstreetmap.org/oauth/request_token
+loginPage: https://www.openstreetmap.org/oauth/authorize
+customerKey: <customer key/client key you've received from the oauth provider>
+customerSecret: <customer key/client secret you've received from the oauth provider>
