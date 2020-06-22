@@ -5,14 +5,9 @@ import json as jsonLib
 
 class regiocode():
 	def __loadJSON(self, fb):
-		return jsonLib.loads(fb, ensure_ascii=False)
+		return jsonLib.loads(fb)
 	
-	def normalize(self, regiocode)
-		# normalize region code by converting to an array stripping the whitespaces at both start and end
-		codeArray = regiocode.split(",")
-		for code, i in enumerate(codeArray):
-			codeArray[i] = code.strip()
-		
+	def normalize(self, regiocode):
 		# normalize region code by deleting duplicates where their original one is a neighbour
 		"""
 		x,x,y --> x,y
@@ -22,18 +17,18 @@ class regiocode():
 		x,y,z,x --> x,y,z,x (stays the same)
 		"""
 		delIndex = []
-		for code, i in enumerate(codeArray):
+		for i, code in enumerate(regiocode):
 			if 0 >= i:
 				continue
 			oi = i-1
-			if codeArray[oi] == codeArray[i]:
+			if regiocode[oi] == regiocode[i]:
 				delIndex.append(i)
 		for i in delIndex:
-			del codeArray[i]
+			del regiocode[i]
 			for u in delIndex:
 				delIndex[i] -= 1
 		
-		return codeArray
+		return regiocode
 		
 	def getRegioDatabase(self, dbname):
 		database = {}
@@ -46,7 +41,7 @@ class regiocode():
 		if os.path.exists(os.path.join("regions", dbname + ".json")):
 			self.indexDB[dbname] = dbname # add entry so it refers to itself
 		if not dbname in self.indexDB:
-			return "error 101 - no database resolve for {}".format(dbname)
+			return dbname, "error 101 - no database resolve for {}".format(dbname)
 		
 		# get the local database
 		dbname = self.indexDB[dbname] # resolve the local database name
@@ -58,11 +53,12 @@ class regiocode():
 			sfile.close()
 		
 		return dbname, database
+	
 	def ßßredirect(self, key, value, settings):
 		if "redirectFrom" in settings and value == settings["redirectFrom"]:
 			return "error 103 - no loop redirects from {} to {} and backwards".format(value, settings["redirectFrom"])
 		settings["redirectFrom"] = key
-		return value, settings # redirect to 'value' e.g. {"__redirect": "sh"} --> redirecting from 'address' to value 'sh'
+		return value, settings # redirect to 'value' e.g. {"@redirect": "sh"} --> redirecting from 'address' to value 'sh'
 
 	def resolveStorage(self, addresspiece, storage, resolved, settings):
 		data = copy.deepcopy(storage)
@@ -73,8 +69,8 @@ class regiocode():
 			data = data[addresspiece] # switch to it directly
 			if type(data) is dict and len(data) > 0: # check if dictionary and has content
 				for tag in data:
-					if tag.startswith("@") and tag in dir(self): # checks wethever the key of the dictionary is a directive starting with '__'
-						addresspiece, settings = self.__getattribute__(tag.replace("__", "ßß", 1))(addresspiece, data[tag], settings) # start the directive code and return the resolved 'addresspiece'. E.g.: 'hamburg' becomes 'hh'
+					if tag.startswith("@") and tag.replace("@", "ßß") in dir(self): # checks wethever the key of the dictionary is a directive starting with '@'
+						addresspiece, settings = self.__getattribute__(tag.replace("@", "ßß", 1))(addresspiece, data[tag], settings) # start the directive code and return the resolved 'addresspiece'. E.g.: 'hamburg' becomes 'hh'
 			# else:
 				# 'addresspiece' is already the correct one, so no need to resolve it
 			return addresspiece, settings
@@ -82,18 +78,19 @@ class regiocode():
 			return "error 101 - no database resolve for {}".format(",".join(resolved) + "," + addresspiece), settings # print error because no entry of 'addresspiece' found
 	
 	def resolve(self, regiocode):
+		regiocode_cloned = copy.deepcopy(regiocode)
 		resolvedregiocode = []
-		
-		regiocode = self.normalize(regiocode)
-		countrycode, storage = self.getRegioDatabase(regiocode[0])
-		del regiocode[0] # country name, do not needed in its local database
+
+		regiocode_cloned = self.normalize(regiocode_cloned)
+		countrycode, storage = self.getRegioDatabase(regiocode_cloned[0])
+		del regiocode_cloned[0] # country name, do not needed in its local database
 		
 		settings = {}
 		
-		for key in regiocode:
+		for key in regiocode_cloned:
 			key, settings = self.resolveStorage(key, storage, resolvedregiocode, settings) # comply with rules and resolve intelligently
-			if entry.startswith("error"):
-				return entry
+			if key.startswith("error"):
+				return key, settings
 			resolvedregiocode.append(key) # add the resolved 'addresspiece' (here: 'key') to the list of resolved regiocodes so they won't be resolved again resulting in a never-ending execution loop
 		return [countrycode] + resolvedregiocode, settings # return the resolved address
 					
@@ -130,11 +127,12 @@ class regiocodehelper(regiocode):
 		Returns: a python dictionary in the format {"<piece 1 of regiocode>": "<piece 1 of resolvedregiocode>", "<piece 2 of regiocode>": "<piece 2 of resolvedregiocode>", ...}
 		Example: extDiff(["germany", "schleswig-holstein", "henstedt-ulzburg"], ["de", "sh", "hu"]) --> {"germany": "de", "schleswig-holstein": "sh", "henstedt-ulzburg": "hu"}
 		"""
+		output = {}
 		for i, original in enumerate(regiocode):
 			resolved = resolvedregiocode[i]
 			if resolved == original and nosame == False:
 				output[original] = original
-			else:
+			elif not resolved == original:
 				output[original] = resolved
 		return output
 	
@@ -161,20 +159,19 @@ class regiocodehelper(regiocode):
 		Example: search(["germany", "schleswig-holstein", "henstedt-ulzburg"], "ulz") --> ["ulzburg", "ulzburg-süd"]
 		"""
 		output = []
-		resolved, settings = self.resolveToResult(regiocode)
+		resolved = self.resolveToResult(regiocode)
 		if type(resolved) is str:
 			return resolved
-		storage = self.getRegioDatabase(resolved[0])
+		countrycode, storage = self.getRegioDatabase(resolved[0])
 		
 		del resolved[0]
-		
 		for key in resolved:
 			storage = storage[key]
 			
 		resultset = storage
 		
 		for key in resultset:
-			if key.find(searchinput):
+			if key.find(searchinput) > -1:
 				output.append(key)
 		return output
 	
