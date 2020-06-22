@@ -1,0 +1,40 @@
+{
+"hamburg": 
+	{
+	"@redirect": "hh"
+	},
+"hh":
+	{
+	"barmbek-nord": {},
+	"barmbek-süd": {},
+	"rotherbaum": {},
+	"sternschanze": {},
+	"st. pauli": {},
+	"hafencity": {},
+	"neustadt": {},
+	"eppendorf": {}
+	},
+"schleswig-holstein": 
+	{
+	"@redirect": "sh"
+	},
+"sh":
+	{
+	"henstedt-ulzburg": {"@redirect": "hu"},
+	"hu":
+		{
+		"ulzburg": {},
+		"ulzburg-süd": {},
+		"rhen": {},
+		"götzberg": {},
+		"goetzberg": {"@redirect": "götzberg"},
+		"henstedt": {},
+		"kaden": {}
+		},
+	"kisdorf": {},
+	"norderstedt": 
+		{
+		"friedrichsgabe": {}
+		}
+	}
+}
