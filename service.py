@@ -12,7 +12,9 @@ APIconf = {}
 class mentor(verification):
 	def __init__(self, secretserverkey):
 		self.secretserverkey = secretserverkey
-		self.resourceOwners = {}
+		self.dbapi = dbhelper()
+		self.regiocodehelper = regiocodehelper()
+		cherrypy.engine.subscribe("stop", self.dbapi.tearDown())
 	
 	@cherrypy.expose
 	def login(self, loginProvider):
@@ -67,22 +69,41 @@ class mentor(verification):
 	def createprofile(self):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+			self.dbhelper.queryHelper("createprofile", (userid))
+			return "OK"
+		return "not logged in"
 	
 	@cherrypy.expose
 	def removeprofile(self):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+			self.dbhelper.queryHelper("removeprofile", (userid))
+			return "OK"
+		return "not logged in"
 	
 	@cherrypy.expose
 	def changeprofile(self, **args):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+		
+			query = []
+			for item in args:
+				name = "update_" + item
+				if name in self.dbhelper.queries:
+					query.append(name, args[item])
+			
+			for item in query:
+				name, inp = query[item]
+				self.dbapi.queryHelper(name, (inp, userid))
+			return "OK"
 	
 	@cherrypy.expose
+	@cherrypy.tools.json_out()
 	def searchpeople(self, location, **args):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-		location, settings = regiocodehelper().resolve(location)
+			defaults = {"available": "true", "languages": ["en"], "textdirection": "ltr"}
+			location, settings = self.regiocodehelper.resolve(location)
 	
 	def _cp_dispatch(self, vpath):
 		if vpath[0] == "login":
