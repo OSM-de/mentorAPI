@@ -54,12 +54,19 @@ class regiocode():
 		
 		return dbname, database
 	
-	def ßßredirect(self, key, value, settings):
+	def ßßredirect(self, key, value, resolved, settings):
 		if "redirectFrom" in settings and value == settings["redirectFrom"]:
-			return "error 103 - no loop redirects from {} to {} and backwards".format(value, settings["redirectFrom"])
+			return "error 103 - no loop redirects from {} to {} and backwards".format(value, settings["redirectFrom"]), settings
 		settings["redirectFrom"] = key
 		return value, settings # redirect to 'value' e.g. {"@redirect": "sh"} --> redirecting from 'address' to value 'sh'
 
+	def ßßneighbours(self, key, value, resolved, settings):
+		neighbours = {}
+		if "neighbours" in settings:
+			neighbours = settings["neighbours"]
+		curregiocode = resolved + [key]
+		neighbours[curregiocode] = neighbours
+		settings["neighbours"] = neighbours
 	def resolveStorage(self, addresspiece, storage, resolved, settings):
 		data = copy.deepcopy(storage)
 		for key in resolved: # skipping resolve process of already resolved address pieces by switching to them directly in order
@@ -70,7 +77,7 @@ class regiocode():
 			if type(data) is dict and len(data) > 0: # check if dictionary and has content
 				for tag in data:
 					if tag.startswith("@") and tag.replace("@", "ßß") in dir(self): # checks wethever the key of the dictionary is a directive starting with '@'
-						addresspiece, settings = self.__getattribute__(tag.replace("@", "ßß", 1))(addresspiece, data[tag], settings) # start the directive code and return the resolved 'addresspiece'. E.g.: 'hamburg' becomes 'hh'
+						addresspiece, settings = self.__getattribute__(tag.replace("@", "ßß", 1))(addresspiece, data[tag], resolved, settings) # start the directive code and return the resolved 'addresspiece'. E.g.: 'hamburg' becomes 'hh'
 			# else:
 				# 'addresspiece' is already the correct one, so no need to resolve it
 			return addresspiece, settings

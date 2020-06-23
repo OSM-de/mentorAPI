@@ -5,8 +5,7 @@ class verification():
 	def isAuthorized(self, token):
 		if type(token) is bytes:
 			token = token.decode("utf-8")
-		clientToken, clientHash = token.split("|")
-		timestamp = clientToken.split(" ")[1]
+		clientToken, timestamp, clientHash = token.split("|")
 		if hmac.compare_digest(self.generateToken(clientToken), clientHash):
 			if time.strptime(timestamp, "%Y/%m/%d/%H/%M") >= time.localtime():
 				return True

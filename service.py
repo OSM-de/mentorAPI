@@ -32,7 +32,7 @@ class mentor(verification):
 			oauthSession = self.oauthCallback(plugin.getOAuthInstance(), config["accessTokenURL"], config["customerKey"], config["customerSecret"], oauth_token, oauth_verifier)
 			
 			#receive user identifier (provider dependent), provider name (provider dependent), generate user token and set it as cookie
-			usertoken = str(plugin.providerName()) + "_" + str(plugin.getUserIdentifier(oauthSession, config)) + " " + str("/".join(self.createExpireTime()))
+			usertoken = str(plugin.providerName()) + "_" + str(plugin.getUserIdentifier(oauthSession, config)) + "|" + str("/".join(self.createExpireTime()))
 			usertoken_hash = self.generateToken(usertoken)
 			cookie = usertoken + "|" + usertoken_hash
 			
@@ -56,12 +56,33 @@ class mentor(verification):
 	
 	@cherrypy.expose
 	def logout(self):
-		if self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			self.__removeCookie("sessionId")
 			self.__redirect("redirectToAfterLogout")
 			return "logged out"
 		else:
 			return "not logged in"
+	
+	@cherrypy.expose
+	def createprofile(self):
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+	
+	@cherrypy.expose
+	def removeprofile(self):
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+	
+	@cherrypy.expose
+	def changeprofile(self, **args):
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+	
+	@cherrypy.expose
+	def searchpeople(self, location, **args):
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+		location, settings = regiocodehelper().resolve(location)
 	
 	def _cp_dispatch(self, vpath):
 		if vpath[0] == "login":
