@@ -5,8 +5,9 @@
 	},
 "hh":
 	{
-	"barmbek-nord": {},
-	"barmbek-süd": {},
+	"barmbek-nord": {"@neighbours": ["barmbek-nord"]},
+	"barmbek-süd": {"@neighbours": ["barmbek-süd"]},
+	"barmbek-sued": {"@redirect": "barmbek-süd"},
 	"rotherbaum": {},
 	"sternschanze": {},
 	"st. pauli": {},
@@ -23,8 +24,9 @@
 	"henstedt-ulzburg": {"@redirect": "hu"},
 	"hu":
 		{
-		"ulzburg": {},
-		"ulzburg-süd": {},
+		"ulzburg": {"@neighbours": ["ulzburg-süd"]},
+		"ulzburg-süd": {"@neighbours": ["ulzburg"]},
+		"ulzburg-sued": {"@redirect": "ulzburg-süd"},
 		"rhen": {},
 		"götzberg": {},
 		"goetzberg": {"@redirect": "götzberg"},

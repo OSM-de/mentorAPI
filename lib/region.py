@@ -65,7 +65,7 @@ class regiocode():
 		if "neighbours" in settings:
 			neighbours = settings["neighbours"]
 		curregiocode = resolved + [key]
-		neighbours[curregiocode] = neighbours
+		neighbours[",".join(curregiocode)] = value
 		settings["neighbours"] = neighbours
 	def resolveStorage(self, addresspiece, storage, resolved, settings):
 		data = copy.deepcopy(storage)

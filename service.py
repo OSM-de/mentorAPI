@@ -101,9 +101,22 @@ class mentor(verification):
 	@cherrypy.tools.json_out()
 	def searchpeople(self, location, **args):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			output = {}
+			
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
 			defaults = {"available": "true", "languages": ["en"], "textdirection": "ltr"}
-			location, settings = self.regiocodehelper.resolve(location)
+			defaults["location"], settings = self.regiocodehelper.resolve(location)
+			
+			for item in args:
+				defaults[item] = args[item]
+			
+			output["resultset"] = self.dbhelper.searchQueryHelper(args)
+			output["request_params"] = args
+			output["resolve_settings"] = settings
+			
+			return output
+		else:
+			return {"error": "not logged in"}
 	
 	def _cp_dispatch(self, vpath):
 		if vpath[0] == "login":
