@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import psycopg2
-_dbconnstr = "dbname=mentorapi"
 class helper():
-	def __init__(self):
+	def __init__(self, dbconnstr):
 		self.conn = psycopg2.connect(_dbconnstr)
 		self.lock = False
 		self.canShutdown = True
@@ -12,14 +11,14 @@ class helper():
 		self.queries["update_textdirection"] = ("update profiles set textdirection=%s where id=%s;", [])
 		self.queries["update_location"] = ("update profiles set location=%s where id=%s;", [])
 		self.queries["update_displayname"] = ("update profiles set displayname=%s where id=%s;", [])
-		self.queries["update_languages"] = ("update profiles set languages=%s where id=%s;", [])
-		self.queries["update_contact"] = ("update profiles set contact=%s where id=%s;", [])
+		#self.queries["update_languages"] = ("update profiles set languages=%s where id=%s;", [])
+		self.queries["update_contact"] = ("update contact set contact=%s where id=%s;", [])
 		self.queries["update_keywords"] = ("update profiles set keywords=%s where id=%s;", [])
 		self.queries["update_about"] = ("update profiles set about=%s where id=%s;", [])
 		self.queries["update_available"] = ("update profiles set available=%s where id=%s;", [])
-		self.queries["search"] = ("select * from profiles where ", ["id", "textdirection", "location", "displayname", "languages", "contact", "keywords", "about", "available"])
+		self.queries["search"] = ("select * from userdetails where ", ["id", "textdirection", "location", "displayname", "languages", "contact", "keywords", "about", "available"])
 		self.queries["search_location"] = ("location=%s", [])
-		self.queries["search_languages"] = ("%s ANY (languages)", [])
+		#self.queries["search_languages"] = ("%s ANY (languages)", [])
 		self.queries["search_location"] = ("location LIKE %s%", [])
 		self.queries["search_contact"] = ("contact ? %s", [])
 		self.queries["search_keywords"] = ("%s ANY (keywords)", [])
@@ -84,4 +83,73 @@ class helper():
 		self.lock = True
 		while self.canShutdown == False:
 			pass
+		self.conn.close()
+
+class management():
+	def __init__(self, dbconnstr):
+		try:
+			self.conn = psycopg2.connect(_dbconnstr)
+		except psycopg2.errors.ConnectionDoesNotExist:
+			return "DOES NOT EXIST"
+
+	def alterTable(self, name, desiredCols, beloud=True):
+		query = []
+		returnedCols = []
+		desiredCols_simplified = []
+		
+		if not ("id", "text") in desiredCols:
+			desiredCols = [("id", "text")] + desiredCols
+		
+		for i in desiredCols:
+			desiredCols_simplified.append(i[0])
+		
+		with self.conn:
+			with self.conn.cursor() as cursor:
+				cursor.execute("SELECT * FROM %s LIMIT 0", (name,))
+				for col in cursor.description:
+					returnedCols.append(col.name)
+		
+		for n, i in enumerate(returnedCols):
+			if i in returnedCols and not i in desiredCols_simplified:
+				# remove from database table `name`
+				if beloud:
+					print("\033[1;31mwill remove\033[0;m {} from database table {}".format(i, name))
+				query.append("ALTER TABLE {} DROP COLUMN {}".format(name, i))
+		for n, i in enumerate(desiredCols)
+			colname = i[0]
+			if colname in desiredCols_simplified and not colname in returnedCols:
+				# add to database table `name`
+				if beloud:
+					print("\033[1;32mwill add\033[0;m] {} to database table {}".format(i, name))
+				query.append("ALTER TABLE {} ADD {} {}".format(name, i, desiredCols[n][1])
+		
+		with self.conn:
+			with self.conn.cursor() as cursor:
+				print("executing query ('will' becomes 'do now')...")
+				cursor.execute(";\n".join(query))
+				cursor.commit()
+	
+	def executeCMD(self, query, params=()):
+		error = None
+		with self.conn:
+			with self.conn.cursor() as cursor:
+				try:
+					cursor.execute(query, params)
+					cursor.commit()
+				except Exception as e:
+					error = e
+		return error
+				
+	def tableExists(self, name):
+		exists = False
+		with self.conn:
+			with self.conn.cursor() as cursor:
+				try:
+					cursor.execute("SELECT * FROM %s LIMIT 0", (name,))
+					exists = True
+				except psycopg2.errors.UndefinedTable:
+					exists = False
+		return exists
+	
+	def tearDown(self):
 		self.conn.close()

@@ -1,6 +1,6 @@
 # Community controlled regions
 
-**Community conrolled regions for community building and for the community to provide newbies a way to find ...**
+**Community conrolled regions for community building and for the community to provide newbies a way to find a mentor who helps in mastering OpenStreetMap**
 
 Here are the files needed for the `region` module in [lib](../lib) to make sense. It allows the user of _mentorAPI_ (usage recognized or not) to filter search results by region (and therefore other users) and to set the region in case the particular user wants to create a profile. The module is responsive of region unification (Only one version of `hamburg` and `hh` should be in the database so the module must resolve the user input `hamburg` to `hh` or as the community decided. At the same time the module must also resolve a search of `hamburg` to `hh` or as the community decided). It uses the JSON files in this directory for doing so and for all other region related things.
 

@@ -12,7 +12,7 @@ APIconf = {}
 class mentor(verification):
 	def __init__(self, secretserverkey):
 		self.secretserverkey = secretserverkey
-		self.dbapi = dbhelper()
+		self.dbapi = dbhelper(APIconf["dbconnstr"])
 		self.regiocodehelper = regiocodehelper()
 		cherrypy.engine.subscribe("stop", self.dbapi.tearDown())
 	
@@ -69,7 +69,7 @@ class mentor(verification):
 	def createprofile(self):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbhelper.queryHelper("createprofile", (userid))
+			self.dbhelper.queryHelper("createprofile", (userid,))
 			return "OK"
 		return "not logged in"
 	
@@ -77,7 +77,7 @@ class mentor(verification):
 	def removeprofile(self):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbhelper.queryHelper("removeprofile", (userid))
+			self.dbhelper.queryHelper("removeprofile", (userid,))
 			return "OK"
 		return "not logged in"
 	
@@ -104,7 +104,7 @@ class mentor(verification):
 			output = {}
 			
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			defaults = {"available": "true", "languages": ["en"], "textdirection": "ltr"}
+			defaults = {"available": "true", "textdirection": "ltr"}
 			defaults["location"], settings = self.regiocodehelper.resolve(location)
 			
 			for item in args:
@@ -157,7 +157,7 @@ def main():
 	for entry in filebuffer.split("\n"):
 		if entry.find(":") > -1:
 			key, value = entry.split(":", 1)
-			APIconf[key] = value
+			APIconf[key.strip()] = value.strip()
 	
 	print("Starting cherrypy server...")
 	cherrypy.quickstart(mentor(secretserverkey), "/", "mentorserver.cfg")
