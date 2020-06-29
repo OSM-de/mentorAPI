@@ -3,6 +3,7 @@ from urllib.parse import parse_qs
 from lib.oauth import verification
 from lib.database import helper as dbhelper
 from lib.region import regiocodehelper
+from lib.config import readConfig
 
 import cherrypy, os, importlib
 
@@ -152,12 +153,8 @@ def main():
 	
 	print("Loading mentorAPI configuration...")
 	sfile = open("mentorapi.yml", "r")
-	filebuffer = sfile.read()
+	filebuffer = readConfig(sfile.read()).config
 	sfile.close()
-	for entry in filebuffer.split("\n"):
-		if entry.find(":") > -1:
-			key, value = entry.split(":", 1)
-			APIconf[key.strip()] = value.strip()
 	
 	print("Starting cherrypy server...")
 	cherrypy.quickstart(mentor(secretserverkey), "/", "mentorserver.cfg")

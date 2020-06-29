@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os
+import sys, os, copy
 sys.path.append(os.path.join(os.path.dirname(os.getcwd())))
 os.chdir(os.path.join(os.path.dirname(os.getcwd())))
 from lib.config import readConfig
@@ -7,21 +7,21 @@ from lib.database import management
 
 APIconf = {}
 queries = {"profiles": "createtable", "contact": "createtable"}
-cmds = {"createdb", """psql -c "CREATE DATABASE {};" """, "exeSQL": "psql --dbname={} --file={}"}
-sqls = {"createtable": "CREATE TABLE {} ({})", "createview": "CREATE OR REPLACE VIEW public.userdetails AS (SELECT {} FROM profiles FULL JOIN contact on profiles.id=contact.id where profiles.available IS TRUE);"}
+cmds = {"createdb": """psql -c "CREATE DATABASE {};" """, "exeSQL": "psql --dbname={} --file={}"}
+sqls = {"createtable": "CREATE TABLE {} ({})", "createview": "CREATE OR REPLACE VIEW userdetails AS (SELECT {} FROM profiles FULL JOIN contact on profiles.id=contact.id where profiles.available IS TRUE);"}
 
 def main():
 	global APIconf, queries, cmds
 	
 	print("loading mentorAPI configuration...")
-	sfile = open("../mentorapi.yml", "r")
-	APIconf = readConfig(sfile.read())
+	sfile = open("mentorapi.yml", "r")
+	APIconf = readConfig(sfile.read()).config
 	sfile.close()
 	
 	print("connecting to the database with the following dbconnstr:")
 	print("  ", APIconf["dbconnstr"])
 	dbhelper = management(APIconf["dbconnstr"])
-	if type(dbhelper) is str:
+	if not dbhelper.error == "":
 		print("\033[1;mDatabase does not exist\033[0;m")
 		
 		print("creating database '{}'...".format(APIconf["dbname"]))
@@ -47,7 +47,7 @@ def main():
 	print("syncing columns (insert/remove)...")
 	for i in queries:
 		if "table_" + i in APIconf:
-			cols = APIconf["table_" + i]
+			cols = copy.copy(APIconf["table_" + i])
 			for n, content in enumerate(cols):
 				colname, coltype = content.split(" ")
 				cols[n] = (colname, coltype)
@@ -70,3 +70,6 @@ def main():
 	
 	print("disconnecting from database...")
 	dbhelper.tearDown()
+
+if "__main__" == __name__:
+	main()

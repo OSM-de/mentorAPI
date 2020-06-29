@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+from psycopg2 import sql
 import psycopg2
 class helper():
 	def __init__(self, dbconnstr):
-		self.conn = psycopg2.connect(_dbconnstr)
+		self.conn = psycopg2.connect(dbconnstr)
 		self.lock = False
 		self.canShutdown = True
 		self.queries = {}
@@ -70,7 +71,6 @@ class helper():
 			with self.conn:
 				with self.conn.cursor() as cursor:
 					cursor.execute(query, params)
-					cursor.commit()
 					if noresult == False:
 						output = self.__toJSON(cursor.fetchmany(limit), columns)
 			
@@ -87,10 +87,11 @@ class helper():
 
 class management():
 	def __init__(self, dbconnstr):
+		self.error = ""
 		try:
-			self.conn = psycopg2.connect(_dbconnstr)
-		except psycopg2.errors.ConnectionDoesNotExist:
-			return "DOES NOT EXIST"
+			self.conn = psycopg2.connect(dbconnstr)
+		except psycopg2.errors.OperationalError:
+			self.error = "DOES NOT EXIST"
 
 	def alterTable(self, name, desiredCols, beloud=True):
 		query = []
@@ -105,7 +106,7 @@ class management():
 		
 		with self.conn:
 			with self.conn.cursor() as cursor:
-				cursor.execute("SELECT * FROM %s LIMIT 0", (name,))
+				cursor.execute(sql.SQL("SELECT * FROM {} LIMIT 0").format(sql.Identifier(name)))
 				for col in cursor.description:
 					returnedCols.append(col.name)
 		
@@ -114,20 +115,20 @@ class management():
 				# remove from database table `name`
 				if beloud:
 					print("\033[1;31mwill remove\033[0;m {} from database table {}".format(i, name))
-				query.append("ALTER TABLE {} DROP COLUMN {}".format(name, i))
-		for n, i in enumerate(desiredCols)
+				query.append(sql.SQL("ALTER TABLE {} DROP COLUMN {}").format(sql.Identifier(name), sql.Identifier(i)))
+		for n, i in enumerate(desiredCols):
 			colname = i[0]
 			if colname in desiredCols_simplified and not colname in returnedCols:
 				# add to database table `name`
 				if beloud:
 					print("\033[1;32mwill add\033[0;m] {} to database table {}".format(i, name))
-				query.append("ALTER TABLE {} ADD {} {}".format(name, i, desiredCols[n][1])
+				query.append(sql.SQL("ALTER TABLE {} ADD {} {}").format(sql.Identifier(name), i, desiredCols[n][1]))
 		
-		with self.conn:
-			with self.conn.cursor() as cursor:
-				print("executing query ('will' becomes 'do now')...")
-				cursor.execute(";\n".join(query))
-				cursor.commit()
+		if len(query) > 0:
+			with self.conn:
+				with self.conn.cursor() as cursor:
+					print("executing query ('will' becomes 'do now')...")
+					cursor.execute(";\n".join(query))
 	
 	def executeCMD(self, query, params=()):
 		error = None
@@ -135,9 +136,9 @@ class management():
 			with self.conn.cursor() as cursor:
 				try:
 					cursor.execute(query, params)
-					cursor.commit()
 				except Exception as e:
 					error = e
+					cursor.rollback()
 		return error
 				
 	def tableExists(self, name):
@@ -145,7 +146,7 @@ class management():
 		with self.conn:
 			with self.conn.cursor() as cursor:
 				try:
-					cursor.execute("SELECT * FROM %s LIMIT 0", (name,))
+					cursor.execute("SELECT * FROM " + name + " LIMIT 0")
 					exists = True
 				except psycopg2.errors.UndefinedTable:
 					exists = False
