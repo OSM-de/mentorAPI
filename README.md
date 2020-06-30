@@ -10,7 +10,13 @@ Click [here](database/README.md) for a how to create the database mentorAPI need
 
 ## Test OAuth and mentorAPI's log in system
 
-Start mentorAPI by issueing `python3 service.py` and by consulting [a README file](test/README.md).
+1. Change in the directory `database` and start a terminal there.
+2. Issue `pip3 install psycopg2` to install `psycopg2`.
+3. Issue the cmd `python3 setup.py` (requires a running PostgreSQL instance).
+4. Change back to the root dir of this API.
+5. Start mentorAPI by issueing `python3 service.py`.
+6. Change to the directory `test` and start a terminal there (see also [the README file there](test/README.md)).
+7. Issue `python3 -m http.server 8080` and pinpoint your browser to http://localhost:8080/index.html in order to test _mentorAPI_.
 
 # Thank You
 
