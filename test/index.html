@@ -1,0 +1,31 @@
+<html>
+	<head>
+		<meta charset='utf-8' />
+	</head>
+	<body>
+		<p><a href='login.html' target='_blank'>Login</a></p>
+		<p><a href='logout.html'>Logout</a></p>
+		<hr />
+		<p><a onclick='communicate("createprofile")' href='#'>Create Profile</a></p>
+		<p><a onclick='communicate("removeprofile")' href='#'>Remove Profile</a></p>
+		<p><a onclick='communicate("changeprofile",encodeURIComponent(document.getElementById("chprofile")))' href='#'>Change Profile as following:</a></p>
+		<code id='chprofile'>location=germany.hamburg.barmbek-nord&displayname=Test User&email=Maria.Musterfrau@example.de</code>
+		<p><a onclick='communicate("searchprofile",encodeURIComponent(document.getElementById("search")))' href='#'>Change Profile as following:</a></p>
+		<code id='search'>location=germany.hamburg&email=this value can be set to whatever you want.It is going to be ignored</code>
+		<hr />
+		<h3>Output:</h3>
+		<code id='output'></code>
+	</body>
+	<script>
+		function communicate(action, body="", jsonResult=false) {
+			let result;
+			let response = fetch("http://localhost:9090/" + action, {"method": "POST", "headers": {"Content-Type": "application/x-www-form-urlencoded"}, "body": body});
+			if (jsonResult) {
+				result = await response.json()
+			} else {
+				result = await response.text()
+			}
+			document.getElementById("output").innerHTML = String(result);
+		}
+	</script>
+</html>

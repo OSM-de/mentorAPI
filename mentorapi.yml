@@ -1,5 +1,5 @@
-redirectToAfterLogin: http://localhost:8080/loggedIn.html
-redirectToAfterLogout: http://localhost:8080/loggedOut.html
+redirectToAfterLogin: http://localhost:8080/
+redirectToAfterLogout: http://localhost:8080/
 
 dbname: mentorapi
 dbconnstr: dbname=mentorapi
