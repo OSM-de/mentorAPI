@@ -13,7 +13,7 @@ APIconf = {}
 class mentor(verification):
 	def __init__(self, secretserverkey):
 		self.secretserverkey = secretserverkey
-		self.dbapi = dbhelper(APIconf["dbconnstr"])
+		self.dbapi = dbhelper(APIconf)
 		self.regiocodehelper = regiocodehelper()
 		cherrypy.engine.subscribe("stop", self.dbapi.tearDown())
 	
@@ -70,7 +70,7 @@ class mentor(verification):
 	def createprofile(self):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbhelper.queryHelper("createprofile", (userid,))
+			self.dbhelper.sendToPostgres("\n".join(self.dbhelper.createUser(userid)))
 			return "OK"
 		return "not logged in"
 	
@@ -78,7 +78,7 @@ class mentor(verification):
 	def removeprofile(self):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbhelper.queryHelper("removeprofile", (userid,))
+			self.dbhelper.sendToPostgres("\n".join(self.dbhelper.removeUser(userid)))
 			return "OK"
 		return "not logged in"
 	
@@ -90,12 +90,9 @@ class mentor(verification):
 			query = []
 			for item in args:
 				name = "update_" + item
-				if name in self.dbhelper.queries:
-					query.append(name, args[item])
+				query.append(self.dbapi.modifyUser(userid, name, args[item]))
 			
-			for item in query:
-				name, inp = query[item]
-				self.dbapi.queryHelper(name, (inp, userid))
+			self.dbhelper.sendToPostgres("\n".join(query))
 			return "OK"
 	
 	@cherrypy.expose
@@ -111,7 +108,8 @@ class mentor(verification):
 			for item in args:
 				defaults[item] = args[item]
 			
-			output["resultset"] = self.dbhelper.searchQueryHelper(args)
+			query = self.dbhelper.searchpeople(args)
+			output["resultset"] = self.dbhelper.sendToPostgres(query)
 			output["request_params"] = args
 			output["resolve_settings"] = settings
 			
@@ -152,9 +150,7 @@ def main():
 			oauthProviders[content]["config"] = config
 	
 	print("Loading mentorAPI configuration...")
-	sfile = open("mentorapi.yml", "r")
-	filebuffer = readConfig(sfile.read()).config
-	sfile.close()
+	filebuffer = readConfig(os.path.join(os.getcwd(), "mentorapi.yml")).config
 	
 	print("Starting cherrypy server...")
 	cherrypy.quickstart(mentor(secretserverkey), "/", "mentorserver.cfg")

@@ -4,17 +4,5 @@ redirectToAfterLogout: http://localhost:8080/loggedOut.html
 dbname: mentorapi
 dbconnstr: dbname=mentorapi
 
-table_profiles:
-  - id text
-  - textdirection text
-  - location text
-  - displayname text
-  - about text
-  - available bool
-
-table_contact:
-  - id text
-  - facebook text
-  - telegram text
-  - email text
-  - matrix text
+include database/tables.yml
+include database/queries.yml

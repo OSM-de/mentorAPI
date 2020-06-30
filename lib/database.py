@@ -2,28 +2,11 @@
 from psycopg2 import sql
 import psycopg2
 class helper():
-	def __init__(self, dbconnstr):
-		self.conn = psycopg2.connect(dbconnstr)
+	def __init__(self, conf):
+		self.conf = conf
+		self.conn = psycopg2.connect(conf["dbconnstr"])
 		self.lock = False
 		self.canShutdown = True
-		self.queries = {}
-		self.queries["createprofile"] = ("insert into profiles values (%s,Null,Null,Null,Null,Null,Null,Null,Null);", [])
-		self.queries["removeprofile"] = ("delete from profiles where id=%s;", [])
-		self.queries["update_textdirection"] = ("update profiles set textdirection=%s where id=%s;", [])
-		self.queries["update_location"] = ("update profiles set location=%s where id=%s;", [])
-		self.queries["update_displayname"] = ("update profiles set displayname=%s where id=%s;", [])
-		#self.queries["update_languages"] = ("update profiles set languages=%s where id=%s;", [])
-		self.queries["update_contact"] = ("update contact set contact=%s where id=%s;", [])
-		self.queries["update_keywords"] = ("update profiles set keywords=%s where id=%s;", [])
-		self.queries["update_about"] = ("update profiles set about=%s where id=%s;", [])
-		self.queries["update_available"] = ("update profiles set available=%s where id=%s;", [])
-		self.queries["search"] = ("select * from userdetails where ", ["id", "textdirection", "location", "displayname", "languages", "contact", "keywords", "about", "available"])
-		self.queries["search_location"] = ("location=%s", [])
-		#self.queries["search_languages"] = ("%s ANY (languages)", [])
-		self.queries["search_location"] = ("location LIKE %s%", [])
-		self.queries["search_contact"] = ("contact ? %s", [])
-		self.queries["search_keywords"] = ("%s ANY (keywords)", [])
-		self.queries["search_available"] = ("available=%s", [])
 	
 	def __toJSON(self, table, columns, curs):
 		data = {}
@@ -31,47 +14,61 @@ class helper():
 			col = {}
 			ident = ""
 			for i in range(0, len(columns)):
-				if columns[i] == "identifier":
+				if columns[i] == "id":
 					ident = row[i]
 				col[columns[i]] = row[i]
 			data[ident] = col
 		return data
 	
-	def queryHelper(self, name, params):
-		query, columns = self.queries[name]
-		if len(columns) > 0:
-			return self.sendToPostgres((query, columns), params)
+	def modifyUser(self, userid, name, param):
+		if name in query:
+			query = self.conf[name]
+			return sql.SQL(query).format(param, userid)
 		else:
-			return self.sendToPostgres((query, columns), params, noresult=True)
-
-	def searchQueryHelper(self, filters):
-		searchQuery, columns = self.queries["search"]
+			return ""
+	def removeUser(self, userid):
+		query = []
+		for name in ["removeprofile", "removecontact"]
+			query = self.conf[name]
+			query.append(sql.SQL(query).format(userid))
+		return query
+	def createUser(self, userid):
+		query = []
+		for name in ["createprofile", "createcontact"]
+			query = self.conf[name]
+			query.append(sql.SQL(query).format(userid))
+	def searchpeople(self, filters):
+		searchQuery = self.conf["search"]
 		filterQuery = []
 		
 		for fltr in filters:
-			if fltr in columns and "search_" + fltr in self.queries and not fltr == "id":
+			if "search_" + fltr in self.conf and not fltr == "id":
 				value = filters[fltr]
 				if type(value) is list:
 					for v in value:
-						filterQuery.append((self.queries["search_" + fltr][0], v))
+						filterQuery.append((self.conf["search_" + fltr], v))
+				else:
+					filterQuery.append((self.conf["search_" + fltr], value))
 		
 		query = []
 		cur = self.conn.cursor()
 		for q in filterQuery:
 			q, arg = filterQuery[q]
 			query.append(cur.mogrify(q, (arg,)))
-		return self.sendToPostgres((searchQuery + "AND".join(query), columns))
+		return searchQuery + " " + "AND".join(query)
 	
-	def sendToPostgres(self, query, params=(), noresult=False, limit=20):
+	def sendToPostgres(self, query, params=(), limit=20):
 		if self.lock == False:
-			query, columns = query
 			output = {}
 			self.canShutdown = False
 			
 			with self.conn:
 				with self.conn.cursor() as cursor:
 					cursor.execute(query, params)
-					if noresult == False:
+					if not cursor.description == None:
+						columns = []
+						for col in cursor.description:
+							cols.append(col.name)
 						output = self.__toJSON(cursor.fetchmany(limit), columns)
 			
 			self.canShutdown = True

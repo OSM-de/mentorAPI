@@ -1,0 +1,16 @@
+table_profiles:
+  - id text
+  - textdirection text
+  - location text
+  - displayname text
+  - about text
+  - available bool
+include profiles_userdefined
+
+table_contact:
+  - id text
+  - facebook text
+  - telegram text
+  - email text
+  - matrix text
+include contact_userdefined

@@ -14,9 +14,7 @@ def main():
 	global APIconf, queries, cmds
 	
 	print("loading mentorAPI configuration...")
-	sfile = open("mentorapi.yml", "r")
-	APIconf = readConfig(sfile.read()).config
-	sfile.close()
+	APIconf = readConfig(os.path.join(os.getcwd(), "mentorapi.yml")).config
 	
 	print("connecting to the database with the following dbconnstr:")
 	print("  ", APIconf["dbconnstr"])
