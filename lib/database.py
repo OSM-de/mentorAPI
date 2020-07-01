@@ -28,6 +28,7 @@ class helper():
 			query = self.conf[name]
 			cur = self.conn.cursor()
 			output = cur.mogrify(query, (param, userid)).decode("utf-8")
+		cur.close()
 		return output
 	
 	def userExists(self, userid, table):

@@ -58,9 +58,9 @@ class mentor(verification):
 			cherrypy.response.headers["Location"] = APIconf[name]
 	
 	def __crossOrigin(self):
-		if cherrypy.request.headers["Origin"]:
+		if "Origin" in cherrypy.request.headers:
 			cherrypy.response.headers["Access-Control-Allow-Origin"] = cherrypy.request.headers["Origin"]
-		elif cherrypy.request.headers["Host"]:
+		elif "Host" in cherrypy.request.headers:
 			cherrypy.response.headers["Access-Control-Allow-Origin"] = cherrypy.request.headers["Host"]
 	
 	@cherrypy.expose
@@ -90,7 +90,10 @@ class mentor(verification):
 		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbapi.sendToPostgres("\n".join(self.dbapi.removeUser(userid)))
+			if self.dbapi.userExists(userid, "profiles"):
+				self.dbapi.sendToPostgres(APIconf["removeprofile"], (userid,))
+			if self.dbapi.userExists(userid, "contact"):
+				self.dbapi.sendToPostgres(APIconf["removecontact"], (userid,))
 			return "OK"
 		return "not logged in"
 	
