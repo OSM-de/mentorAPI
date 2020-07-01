@@ -67,6 +67,7 @@ class regiocode():
 		curregiocode = resolved + [key]
 		neighbours[",".join(curregiocode)] = value
 		settings["neighbours"] = neighbours
+		return key, settings
 	def resolveStorage(self, addresspiece, storage, resolved, settings):
 		data = copy.deepcopy(storage)
 		for key in resolved: # skipping resolve process of already resolved address pieces by switching to them directly in order

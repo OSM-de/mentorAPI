@@ -10,6 +10,8 @@ class helper():
 	
 	def __toJSON(self, table, columns, curs):
 		data = {}
+		if curs.rowcount == 0:
+			return data
 		for row in table:
 			col = {}
 			ident = ""
@@ -21,41 +23,48 @@ class helper():
 		return data
 	
 	def modifyUser(self, userid, name, param):
-		if name in query:
+		output = ""
+		if name in self.conf:
 			query = self.conf[name]
-			return sql.SQL(query).format(param, userid)
+			cur = self.conn.cursor()
+			output = cur.mogrify(query, (param, userid)).decode("utf-8")
+		return output
+	
+	def userExists(self, userid, table):
+		result = False
+		query = "SELECT * FROM {} WHERE id=%s".format(table)
+		cur = self.conn.cursor()
+		
+		cur.execute(query, (userid,))
+		if cur.rowcount == 1:
+			result = True
 		else:
-			return ""
-	def removeUser(self, userid):
-		query = []
-		for name in ["removeprofile", "removecontact"]
-			query = self.conf[name]
-			query.append(sql.SQL(query).format(userid))
-		return query
-	def createUser(self, userid):
-		query = []
-		for name in ["createprofile", "createcontact"]
-			query = self.conf[name]
-			query.append(sql.SQL(query).format(userid))
+			result = False
+		cur.close()
+		return result
+		
 	def searchpeople(self, filters):
 		searchQuery = self.conf["search"]
 		filterQuery = []
 		
+		cur = self.conn.cursor()
 		for fltr in filters:
 			if "search_" + fltr in self.conf and not fltr == "id":
 				value = filters[fltr]
+				query = self.conf["search_" + fltr]
 				if type(value) is list:
 					for v in value:
-						filterQuery.append((self.conf["search_" + fltr], v))
+						if query.find("%s") > -1:
+							filterQuery.append(cur.mogrify(query, (v,)).decode("utf-8"))
+						else:
+							filerQuery.append(query)
 				else:
-					filterQuery.append((self.conf["search_" + fltr], value))
-		
-		query = []
-		cur = self.conn.cursor()
-		for q in filterQuery:
-			q, arg = filterQuery[q]
-			query.append(cur.mogrify(q, (arg,)))
-		return searchQuery + " " + "AND".join(query)
+					if query.find("%s") > -1:
+						filterQuery.append(cur.mogrify(query, (value,)).decode("utf-8"))
+					else:
+						filterQuery.append(query)
+		cur.close()
+		return searchQuery + " " + " AND ".join(filterQuery) + ";"
 	
 	def sendToPostgres(self, query, params=(), limit=20):
 		if self.lock == False:
@@ -64,12 +73,15 @@ class helper():
 			
 			with self.conn:
 				with self.conn.cursor() as cursor:
-					cursor.execute(query, params)
+					if params == ():
+						cursor.execute(query)
+					else:
+						cursor.execute(query, params)
 					if not cursor.description == None:
 						columns = []
 						for col in cursor.description:
-							cols.append(col.name)
-						output = self.__toJSON(cursor.fetchmany(limit), columns)
+							columns.append(col.name)
+						output = self.__toJSON(cursor.fetchmany(limit), columns, cursor)
 			
 			self.canShutdown = True
 			return output

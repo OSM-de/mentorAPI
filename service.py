@@ -5,7 +5,7 @@ from lib.database import helper as dbhelper
 from lib.region import regiocodehelper
 from lib.config import readConfig
 
-import cherrypy, os, importlib
+import cherrypy, os, importlib, copy
 
 oauthProviders = {}
 APIconf = {}
@@ -15,10 +15,10 @@ class mentor(verification):
 		self.secretserverkey = secretserverkey
 		self.dbapi = dbhelper(APIconf)
 		self.regiocodehelper = regiocodehelper()
-		cherrypy.engine.subscribe("stop", self.dbapi.tearDown())
 	
 	@cherrypy.expose
 	def login(self, loginProvider):
+		self.__crossOrigin()
 		if loginProvider in oauthProviders:
 			if "sessionId" in cherrypy.request.cookie:
 				self.logout()
@@ -57,8 +57,15 @@ class mentor(verification):
 			cherrypy.response.status = "303"
 			cherrypy.response.headers["Location"] = APIconf[name]
 	
+	def __crossOrigin(self):
+		if cherrypy.request.headers["Origin"]:
+			cherrypy.response.headers["Access-Control-Allow-Origin"] = cherrypy.request.headers["Origin"]
+		elif cherrypy.request.headers["Host"]:
+			cherrypy.response.headers["Access-Control-Allow-Origin"] = cherrypy.request.headers["Host"]
+	
 	@cherrypy.expose
 	def logout(self):
+		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			self.__removeCookie("sessionId")
 			self.__redirect("redirectToAfterLogout")
@@ -68,48 +75,65 @@ class mentor(verification):
 	
 	@cherrypy.expose
 	def createprofile(self):
+		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbhelper.sendToPostgres("\n".join(self.dbhelper.createUser(userid)))
+			if not self.dbapi.userExists(userid, "profiles"):
+				self.dbapi.sendToPostgres(APIconf["createprofile"], (userid,))
+			if not self.dbapi.userExists(userid, "contact"):
+				self.dbapi.sendToPostgres(APIconf["createcontact"], (userid,))
 			return "OK"
 		return "not logged in"
 	
 	@cherrypy.expose
 	def removeprofile(self):
+		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			self.dbhelper.sendToPostgres("\n".join(self.dbhelper.removeUser(userid)))
+			self.dbapi.sendToPostgres("\n".join(self.dbapi.removeUser(userid)))
 			return "OK"
 		return "not logged in"
 	
 	@cherrypy.expose
-	def changeprofile(self, **args):
+	@cherrypy.tools.json_in()
+	def changeprofile(self):
+		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-		
+			args = cherrypy.request.json
 			query = []
+			if "location" in args:
+				args["location"], settings = self.regiocodehelper.resolve(args["location"].split(","))
+				args["location"] = ",".join(args["location"])
 			for item in args:
 				name = "update_" + item
 				query.append(self.dbapi.modifyUser(userid, name, args[item]))
-			
-			self.dbhelper.sendToPostgres("\n".join(query))
+			self.dbapi.sendToPostgres("\n".join(query))
 			return "OK"
 	
 	@cherrypy.expose
+	@cherrypy.tools.json_in()
 	@cherrypy.tools.json_out()
-	def searchpeople(self, location, **args):
+	def searchpeople(self):
+		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			output = {}
+			args = cherrypy.request.json
+			if not "location" in args:
+				return {"error": "'location' requirred"}
 			
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			defaults = {"available": "true", "textdirection": "ltr"}
-			defaults["location"], settings = self.regiocodehelper.resolve(location)
+			defaults = {"available": "true"}
+			params = copy.deepcopy(args)
+			params["location"], settings = self.regiocodehelper.resolve(args["location"].split(","))
+			output["region_resolved"] = ",".join(params["location"])
+			params["location"] = ",".join(params["location"]) + "%"
 			
-			for item in args:
-				defaults[item] = args[item]
+			for item in params:
+				defaults[item] = params[item]
 			
-			query = self.dbhelper.searchpeople(args)
-			output["resultset"] = self.dbhelper.sendToPostgres(query)
+			query = self.dbapi.searchpeople(defaults)
+			output["resultset"] = self.dbapi.sendToPostgres(query)
 			output["request_params"] = args
 			output["resolve_settings"] = settings
 			
@@ -130,6 +154,7 @@ class mentor(verification):
 			return self
 		
 def main():
+	global APIconf
 	print("Generating secret server key just this instance knows...")
 	secretserverkey = os.urandom(16)
 	
@@ -150,7 +175,7 @@ def main():
 			oauthProviders[content]["config"] = config
 	
 	print("Loading mentorAPI configuration...")
-	filebuffer = readConfig(os.path.join(os.getcwd(), "mentorapi.yml")).config
+	APIconf = readConfig(os.path.join(os.getcwd(), "mentorapi.yml")).config
 	
 	print("Starting cherrypy server...")
 	cherrypy.quickstart(mentor(secretserverkey), "/", "mentorserver.cfg")

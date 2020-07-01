@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from urllib.parse import parse_qs
 import requests, time, hmac
 
 class verification():
@@ -6,7 +7,7 @@ class verification():
 		if type(token) is bytes:
 			token = token.decode("utf-8")
 		clientToken, timestamp, clientHash = token.split("|")
-		if hmac.compare_digest(self.generateToken(clientToken), clientHash):
+		if hmac.compare_digest(self.generateToken(clientToken + "|" + timestamp), clientHash):
 			if time.strptime(timestamp, "%Y/%m/%d/%H/%M") >= time.localtime():
 				return True
 		return False
@@ -40,6 +41,8 @@ class verification():
 		creds = parse_qs(r.text)
 		user_key = creds.get("oauth_token")
 		user_secret = creds.get("oauth_token_secret")
+		if not "resourceOwners" in dir(self):
+			self.resourceOwners = {}
 		self.resourceOwners[str(user_key[0])] = str(user_secret[0])
 		
 		return str(user_key[0])

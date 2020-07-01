@@ -16,3 +16,6 @@ testdata = [(["germany", "schleswig-holstein", "henstedt-ulzburg"], "ulz"), (["g
 for t in testdata:
 	searchinto, searchinput = t
 	print("search", searchinput, "in", searchinto, "-->", helper.search(searchinto, searchinput))
+
+print()
+print(helper.resolveToResult(["deutschland", "hamburg", "barmbek-nord"]))

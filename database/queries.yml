@@ -1,5 +1,5 @@
-createprofile: insert into profiles values (%s,Null,Null,Null,Null,Null,Null,Null,Null);
-createcontact: insert into profiles values (%s,Null,Null,Null,Null);
+createprofile: insert into profiles values (%s,Null,Null,Null,Null,true);
+createcontact: insert into contact values (%s,Null,Null,Null,Null);
 removeprofile: delete from profiles where id=%s;
 removecontact: delete from contact where id=%s;
 update_textdirection: update profiles set textdirection=%s where id=%s;
@@ -12,7 +12,7 @@ update_telegram: update contact set telegram=%s where id=%s;
 update_email: update contact set email=%s where id=%s;
 update_matrix: update contact set matrix=%s where id=%s;
 search: select * from userdetails where
-search_location: location LIKE %s%
+search_location: location LIKE %s
 search_facebook: facebook IS NOT NULL
 search_telegram: telegram IS NOT NULL
 search_email: email IS NOT NULL

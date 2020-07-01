@@ -5,8 +5,8 @@
 	},
 "hh":
 	{
-	"barmbek-nord": {"@neighbours": ["barmbek-nord"]},
-	"barmbek-süd": {"@neighbours": ["barmbek-süd"]},
+	"barmbek-nord": {"@neighbours": ["barmbek-süd"]},
+	"barmbek-süd": {"@neighbours": ["barmbek-nord"]},
 	"barmbek-sued": {"@redirect": "barmbek-süd"},
 	"rotherbaum": {},
 	"sternschanze": {},
