@@ -1,0 +1,12 @@
+<div class='smartFields'>
+	<div class='search' role='search' aria-label="%s">
+		<div class='part'>
+			
+		</div>
+		<input type='text' role='searchbox' onkeydown='' placeholder='%s' />
+		<ul class='searchresult' aria-label='%s'>
+		
+		</ul>
+	</div>
+	
+</div>

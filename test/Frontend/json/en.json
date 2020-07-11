@@ -1,0 +1,14 @@
+{
+"STATE_SUCCESS": "Done!",
+"STATE_NOPROFILE": "This operation makes only sense with an existing profile, however you don't have a profile yet!",
+"LNK_LOGOUT": "Logout",
+"LNK_LOGIN": "Login",
+"LNK_VIEWPROFILE": "View profile",
+"LNK_CREATEPROFILE": "Create profile",
+"SEARCH_LOCATION": "Location",
+"SEARCH_LOCATION_RESULT": "Select location piece",
+"SEARCH_LOCATION_PARTS": " added location pieces",
+"SEARCH_CONTACT": "Contact methods",
+"SEARCH_CONTACT_RESULT": "select contact method",
+"SEARCH_CONTACT_PARTS": "added contact methods"
+}

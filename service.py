@@ -74,6 +74,16 @@ class mentor(verification):
 			return "not logged in"
 	
 	@cherrypy.expose
+	def profileExists(self):
+		self.__crossOrigin()
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+			if self.dbapi.userExists(userid, "profiles") and self.dbapi.userExists(userid, "contact"):
+				return "true"
+			return "false"
+		return "not logged in"
+	
+	@cherrypy.expose
 	def createprofile(self):
 		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
@@ -105,6 +115,10 @@ class mentor(verification):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
 			args = cherrypy.request.json
 			query = []
+			if not self.dbapi.userExists(userid, "profiles"):
+				return "profile not existing"
+			if "id" in args:
+				return "'id' not allowed"
 			if "location" in args:
 				args["location"], settings = self.regiocodehelper.resolve(args["location"].split(","))
 				args["location"] = ",".join(args["location"])
@@ -113,6 +127,21 @@ class mentor(verification):
 				query.append(self.dbapi.modifyUser(userid, name, args[item]))
 			self.dbapi.sendToPostgres("\n".join(query))
 			return "OK"
+		return "not logged in"
+	
+	@cherrypy.expose
+	@cherrypy.tools.json_out()
+	def showprofile(self):
+		self.__crossOrigin():
+		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
+			serid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+			return self.dbapi.sendToPostgres(APIconf["showprofile"], (userid,))
+		return {"error": "not logged in"}
+	
+	@cherrypy.expose
+	def contactmethods(self):
+		self.__crossOrigin():
+		return ",".join(self.dbapi.tableSchema("contact"))
 	
 	@cherrypy.expose
 	@cherrypy.tools.json_in()

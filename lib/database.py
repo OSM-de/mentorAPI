@@ -43,7 +43,22 @@ class helper():
 			result = False
 		cur.close()
 		return result
+	
+	def tableSchema(self, tablename):
+		output = []
+		query = "select column_name from information_schema.columns where table_name=%s;"
 		
+		cur = self.conn.cursor()
+		cur.execute(query, (tablename,))
+		data = cur.fetchall()
+		cur.close()
+		
+		for row in data:
+			if not row[0] == "id":
+				output.append(row[0])
+		
+		return output
+	
 	def searchpeople(self, filters):
 		searchQuery = self.conf["search"]
 		filterQuery = []
@@ -161,6 +176,6 @@ class management():
 				except psycopg2.errors.UndefinedTable:
 					exists = False
 		return exists
-	
+	def tableSchema(self, tablename):
 	def tearDown(self):
 		self.conn.close()
