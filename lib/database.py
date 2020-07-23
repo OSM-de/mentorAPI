@@ -101,9 +101,9 @@ class helper():
 			
 			self.canShutdown = True
 			return output
-			
 		else:
 			return "error - shutting down"
+	
 	def tearDown(self):
 		self.lock = True
 		while self.canShutdown == False:
@@ -176,6 +176,6 @@ class management():
 				except psycopg2.errors.UndefinedTable:
 					exists = False
 		return exists
-	def tableSchema(self, tablename):
+	
 	def tearDown(self):
 		self.conn.close()

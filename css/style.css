@@ -1,0 +1,284 @@
+/* Basic definition */
+html,body,p,h1,h2,h3,h4,h5,h6,nav,img {
+	margin:0px;
+	padding:0px
+}
+
+html, body {
+	width:100%;
+	height:100%;
+}
+
+button {
+		margin-top:auto;
+		margin-bottom:auto;
+		border-radius:5px;
+		padding:10px !important;
+		transition:.4s;
+		border:none;
+	}
+
+button:hover {
+	background-color:white;
+	box-shadow:2px 2px 5px #5b5b5bff;
+}
+
+hr {
+	margin-top:20px;
+	margin-bottom:20px;
+}
+/* Header definition */
+header {
+	display:grid;
+	position:relative;
+	grid-template-columns:auto auto auto auto;
+	grid-auto-flow:row;
+	justify-content:start;
+	grid-column-gap:10px;
+	height:60px;
+	width:100%;
+	background-color:#66cc66;
+	color:#5b5b5bff;
+}
+header * {
+	padding:5px;
+}
+
+	/* Navigation definition */
+	.nav-border {
+		display:none;
+		min-width:150px;
+		position:absolute;
+		top:100%;
+		border-radius:5px;
+		background-color:white;
+		
+	}
+	nav {
+		background-color:#66cc66;
+		border-radius:5px;
+	}
+	.nav-border:hover {
+		display:block;
+	}
+	nav a {
+		display:block;
+		color:#5b5b5bff;
+		text-decoration:none;
+		transition:.4s;
+		padding-left:30px;
+	}
+	nav a:hover {
+		padding-left:0px;
+	}
+
+	/* Menu button definition */
+	.menu {
+		display:inline-block;
+		grid-row:1 / 2;
+		height:50px;
+		width:50px;
+	}
+	
+	.menu:hover ~ .nav-border {
+		display:block;
+		z-index:102;
+	}
+	
+	/* SmartTypingFields definition */
+	header .smartTypingField {
+		padding:0px;
+		margin-top:auto;
+		margin-bottom:auto;
+	}
+	
+	header .smartTypingField .search {
+		background-color:white;
+		border-radius:5px;
+		height:30px;
+		min-width:150px;
+		display:flex;
+	}
+	
+	header .smartTypingField .search .parts {
+		list-style-type:none;
+		margin:0px;
+		display:inline-block;
+		padding-left:2px;
+	}
+	
+	header .smartTypingField .search .parts li {
+		display:inline;
+		background-color:#66cc66;
+		border-radius:5px;
+		margin-right:5px;
+	}
+	
+	header .smartTypingField .search .parts li .remove{
+		font-size:10px;
+		vertical-align:50%;
+	}
+	
+	header .smartTypingField .search input[type="text"] {
+		display:inline;
+		border:none;
+		box-sizing:border-box;
+		max-width:100%;
+		color:inherit;
+	}
+	header .smartTypingField .search .searchandsuggestion {
+		position:relative;
+		padding:0px;
+		font-size:16px;
+		line-height:1.188;
+	}
+	header .smartTypingField .search .searchresult {
+		list-style-type:none;
+		background-color:white;
+		display:none;
+		margin:0px;
+		position:absolute;
+		top:100%;
+		left:0px;
+		right:0px;
+		border-left:1px solid #5b5b5bff;
+		border-bottom:1px solid #5b5b5bff;
+		border-right:1px solid #5b5b5bff;
+		color:inherit;
+	}
+	header .smartTypingField .search .searchresult li {
+		transition:.4s;
+		margin:0px;
+	}
+	header .smartTypingField .search .searchresult li:hover {
+		color:#66cc66;
+	}
+
+/* Colour definition */
+.red {
+	color:#ff3333;
+}
+.green {
+	color:#66cc66;
+}
+
+/* NotificationArea definition */
+#notificationArea {
+	z-index:100;
+	display:none;
+	position:fixed;
+	text-align:center;
+	margin:10px;
+	top:5%;
+	left:50%;
+	background-color:#ffad33;
+	border-radius:10px;
+	padding:5px;
+	font-size:22px;
+	width:40%;
+	transform:translate(-50%, 0);
+}
+#message {
+	color:white;
+	font-weight:bold;
+}
+
+/* <section> definition */
+section {
+	width:60%;
+	margin-top:10px;
+	margin-bottom:10px;
+	margin-left:auto;
+	margin-right:auto;
+}
+	
+	/* general definition */
+	#profile, #userlist {
+		display:none;
+	}
+	#userlist {
+		flex-wrap:wrap;
+	}
+	#profile hr {
+		background-color:#ff3333;
+		height:5px;
+		border-radius:5px;
+	}
+	
+	.profilesection {
+		margin-top:10px;
+	}
+	.show {
+		display:block;
+	}
+	
+	/* userlist definition */
+	.profilefield {
+		box-sizing:border-box;
+		display:inline-block;
+		padding:5px;
+		width:215px;
+		margin-top:5px;
+		margin-bottom:5px;
+		margin-left:auto;
+		margin-right:auto;
+		border:1px solid #5b5b5bff;
+		transition:.4s;
+	}
+	.profilefield:hover {
+		box-shadow:5px 5px 10px #5b5b5bff;
+	}
+	.profilefield ul, .profilefield ul li {
+		list-style-type:none;
+		margin:0px;
+		padding:0px;
+	}
+	
+	.profilefield ul li {
+		display:inline;
+	}
+	.profilefield h3 {
+		text-align:center;
+		font-size:18px;
+		color:#5b5b5bff;
+		padding:5px;
+	}
+	.avatar {
+		width:200px;
+		height:200px;
+		border:inherit;
+	}
+	.info {
+		box-sizing:border-box;
+		padding:5px;
+		display:flex;
+		margin-left:auto;
+		margin-right:auto;
+	}
+	
+	/* Own profile definition */
+	.profilesection {
+		box-sizing:border-box;
+		border-radius:5px;
+	}
+	.profilesection input[type="text"] {
+		border:none;
+		margin-top:5px;
+		margin-bottom:5px;
+		padding:5px;
+	}
+	.generalprofile input[type="text"] {
+		border-bottom:4px solid #3377ff;
+	}
+	.contactprofile input[type="text"] {
+		border-bottom:4px solid #ff8533;
+	}
+	.removeprofilebtn {
+		padding:10px;
+		border:none;
+		background-color:#ff3333;
+		color:white;
+	}
+	.removeprofilebtn:hover {
+		color:black;
+	}

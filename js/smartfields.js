@@ -11,10 +11,12 @@ function smartTypingField() {
 			<ul class='parts' id='${address}_parts' aria-label='${partslabel}'>
 					
 			</ul>
-			<input type='text' role='searchbox' onkeydown='smartTypingFields_pressedOnSearchbox(event, "${address}")' placeholder='${searchtextlabel}' id='${address}_searchbox' />
-			<ul class='searchresult' aria-label='${searchresultlabel}' id='${address}_searchresult'>
+			<div class='searchandsuggestion'>
+				<input type='text' role='searchbox' onkeydown='smartTypingFields_pressedOnSearchbox(event, "${address}")' placeholder='${searchtextlabel}' id='${address}_searchbox'/>
+				<ul class='searchresult' aria-label='${searchresultlabel}' id='${address}_searchresult'>
 				
 			</ul>
+			</div>
 		</div>`
 		
 		let newSS = document.createElement("div");
@@ -46,7 +48,7 @@ function smartTypingFields_pressedOnSearchbox(e, mother) {
 		newPart.setAttribute("aria-checked", true);
 		newPart.setAttribute("tabindex", 0);
 		newPart.setAttribute("class", "option");
-		newPart.innerHTML =`${value}<span aria-hidden='true' class='remove' onclick='console.log(event);event.target.parentNode.parentElement.removeChild(event.target.parentElement)'>x</span>`;
+		newPart.innerHTML =`${value}<span aria-hidden='true' class='remove' onclick='event.target.parentNode.parentElement.removeChild(event.target.parentElement)'>x</span>`;
 		newPart.addEventListener("click", function() { event.target.parentNode.removeChild(event.target) });
 		parts.appendChild(newPart);
 	}

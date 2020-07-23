@@ -30,7 +30,7 @@ class regiocode():
 		
 		return regiocode
 		
-	def getRegioDatabase(self, dbname):
+	def getRegioDatabase(self, dbname, indexSelf=False):
 		database = {}
 		
 		# get the index database itself
@@ -38,6 +38,8 @@ class regiocode():
 			sfile = open(os.path.join("regions", "index.json"), "r")
 			self.indexDB = self.__loadJSON(sfile.read())
 			sfile.close()
+		if indexSelf:
+			return [region for region in self.indexDB]
 		if os.path.exists(os.path.join("regions", dbname + ".json")):
 			self.indexDB[dbname] = dbname # add entry so it refers to itself
 		if not dbname in self.indexDB:
@@ -167,16 +169,19 @@ class regiocodehelper(regiocode):
 		Example: search(["germany", "schleswig-holstein", "henstedt-ulzburg"], "ulz") --> ["ulzburg", "ulzburg-süd"]
 		"""
 		output = []
-		resolved = self.resolveToResult(regiocode)
-		if type(resolved) is str:
-			return resolved
-		countrycode, storage = self.getRegioDatabase(resolved[0])
+		if 0 == len(regiocode):
+			resultset = self.getRegioDatabase(searchinput, indexSelf=True)
+		else:
+			resolved = self.resolveToResult(regiocode)
+			if type(resolved) is str:
+				return resolved
+			countrycode, storage = self.getRegioDatabase(resolved[0])
 		
-		del resolved[0]
-		for key in resolved:
-			storage = storage[key]
+			del resolved[0]
+			for key in resolved:
+				storage = storage[key]
 			
-		resultset = storage
+			resultset = storage
 		
 		for key in resultset:
 			if key.find(searchinput) > -1:

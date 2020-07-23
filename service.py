@@ -39,14 +39,20 @@ class mentor(verification):
 			usertoken_hash = self.generateToken(usertoken)
 			cookie = usertoken + "|" + usertoken_hash
 			
-			cherrypy.response.cookie["sessionId"] = cookie # http://localhost:9090
+			cherrypy.response.headers["Set-Cookie"] = "sessionId=" + cookie + "; Max-Age=" + str(60*60) + "; Path=/; HttpOnly"
+			"""cherrypy.response.cookie["sessionId"] = cookie # http://localhost:9090
 			cherrypy.response.cookie["sessionId"]["Path"] = "/"
+			cherrypy.response.cookie["sessionId"]["HttpOnly"] = True
+			cherrypy.response.cookie["sessionId"]["expires"] = 60*60*1000
+			cherrypy.response.cookie["sessionId"]["sameSite"] = "Lax"""
+			
 			self.__redirect("redirectToAfterLogin")
 	
 	def __removeCookie(self, name):
 		if name in cherrypy.request.cookie:
 			cherrypy.response.cookie[name] = cherrypy.request.cookie[name]
 			cherrypy.response.cookie[name]["expires"] = 0
+			cherrypy.response.cookie[name]["Max-Age"] = 0
 	
 	def __redirect(self, name):
 		if name in cherrypy.request.cookie:
@@ -67,8 +73,8 @@ class mentor(verification):
 	def logout(self):
 		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
-			self.__removeCookie("sessionId")
-			self.__redirect("redirectToAfterLogout")
+			self.__removeCookie("sessionId");
+			self.__redirect("redirectToAfterLogout");
 			return "logged out"
 		else:
 			return "not logged in"
@@ -119,7 +125,7 @@ class mentor(verification):
 				return "profile not existing"
 			if "id" in args:
 				return "'id' not allowed"
-			if "location" in args:
+			if "location" in args and args["location"].find(",") > -1 and not args["location"] == "":
 				args["location"], settings = self.regiocodehelper.resolve(args["location"].split(","))
 				args["location"] = ",".join(args["location"])
 			for item in args:
@@ -132,15 +138,15 @@ class mentor(verification):
 	@cherrypy.expose
 	@cherrypy.tools.json_out()
 	def showprofile(self):
-		self.__crossOrigin():
+		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
-			serid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
 			return self.dbapi.sendToPostgres(APIconf["showprofile"], (userid,))
 		return {"error": "not logged in"}
 	
 	@cherrypy.expose
 	def contactmethods(self):
-		self.__crossOrigin():
+		self.__crossOrigin()
 		return ",".join(self.dbapi.tableSchema("contact"))
 	
 	@cherrypy.expose
@@ -154,7 +160,6 @@ class mentor(verification):
 			if not "location" in args:
 				return {"error": "'location' requirred"}
 			
-			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
 			defaults = {"available": "true"}
 			params = copy.deepcopy(args)
 			params["location"], settings = self.regiocodehelper.resolve(args["location"].split(","))
@@ -172,6 +177,21 @@ class mentor(verification):
 			return output
 		else:
 			return {"error": "not logged in"}
+	
+	@cherrypy.expose
+	@cherrypy.tools.json_in()
+	@cherrypy.tools.json_out()
+	def autocompleteRegion(self):
+		self.__crossOrigin()
+		searchresult = {}
+		if not "json" in dir(cherrypy.request):
+			return 0
+		regiocodes = cherrypy.request.json
+		
+		for search in regiocodes:
+			searchresult[search] = self.regiocodehelper.search(regiocodes[search], search)
+		
+		return searchresult
 	
 	def _cp_dispatch(self, vpath):
 		if vpath[0] == "login":
