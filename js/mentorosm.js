@@ -210,9 +210,9 @@ function searchusers() {
 	cacheid = cacheid.join(",")
 	
 	function callb(resp) {
-		console.log(cacheid);
 		usersearchCache[cacheid] = resp;
 		let users = resp.resultset;
+		let urlhandlers = {"matrix": "https://matrix.to/#/#", "telegram": "https://t.me/", "email": "mailto:"}
 		let entries = [];
 		for (let i in users) {
 			let info = {};
@@ -231,7 +231,7 @@ function searchusers() {
 				if (u == "email") {
 					info_text.push("<a href='mailto:" + info[u] + "'>E-Mail</a>");
 				} else {
-					info_text.push("<a href='" + info[u] + "'>" + title + "</a>");
+					info_text.push("<a target='_blank' href='" + urlhandlers[u]  + info[u] + "'>" + title + "</a>");
 				}
 			}
 			entries.push("<div class='profilefield'><img class='avatar' src='" + info["imageurl"] + "' onerror='errorLoadingImage(event);' /><h3>" + info["displayname"] + "</h3><div class='info'><span>" + info_text.join(" &nbsp; ") + "</span></div></div>");

@@ -75,9 +75,11 @@ header * {
 	/* Menu button definition */
 	.menu {
 		display:inline-block;
-		grid-row:1 / 2;
+		grid-row:1 / 4;
 		height:50px;
 		width:50px;
+		margin-top:auto;
+		margin-bottom:auto;
 	}
 	
 	.menu:hover ~ .nav-border {
@@ -282,3 +284,35 @@ section {
 	.removeprofilebtn:hover {
 		color:black;
 	}
+
+@media only screen and (max-width:800px) {
+	header {
+		grid-template-columns:50px auto;
+		justify-content:initial;
+		justify-self:end;
+		height:auto;
+	}
+	
+	section {
+	width:100%;
+	box-sizing:border-box;
+	padding:5px;
+}
+	
+	.nav-border {
+		top:70%;
+	}
+	
+	header .smartTypingField .search {
+		background-color:white;
+		border-radius:5px;
+		height:30px;
+		min-width:initial;
+		display:flex;
+	}
+	
+	#usersearch {
+		grid-column: 2;
+	}
+
+}
