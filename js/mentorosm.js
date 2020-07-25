@@ -36,7 +36,7 @@ function createoviewprofile() {
 	if (hasProfile) {
 		resetmain();
 		let elem = document.getElementById("profile");
-		let generalFields = {"displayname": "text", "location": "text", "about": "hide", "available": "checkbox:yes,no"}
+		let generalFields = {"displayname": "text", "location": "text", "about": "hide", "imageurl": "hide", "available": "checkbox:yes,no"}
 		let outGeneral = "";
 		let outContact = "";
 		elem.innerHTML = "";
@@ -225,7 +225,7 @@ function searchusers() {
 			}
 			for (let u in info) {
 				let title = u.charAt(0).toUpperCase() + u.slice(1);
-				if (u == "id" || u == "available" || u == "location" || u == "displayname") {
+				if (u == "id" || u == "available" || u == "location" || u == "displayname" || u == "imageurl") {
 					continue;
 				}
 				if (u == "email") {
@@ -234,7 +234,7 @@ function searchusers() {
 					info_text.push("<a href='" + info[u] + "'>" + title + "</a>");
 				}
 			}
-			entries.push("<div class='profilefield'><img class='avatar' src='images/humanface.svg' onerror='this.src = \"images/humanface.svg\"' /><h3>" + info["displayname"] + "</h3><div class='info'><span>" + info_text.join(" &nbsp; ") + "</span></div></div>");
+			entries.push("<div class='profilefield'><img class='avatar' src='" + info["imageurl"] + "' onerror='errorLoadingImage(event);' /><h3>" + info["displayname"] + "</h3><div class='info'><span>" + info_text.join(" &nbsp; ") + "</span></div></div>");
 		}
 	elem.innerHTML = entries.join("");
 	elem.style.display = "flex";
@@ -243,7 +243,13 @@ function searchusers() {
 	if (usersearchCache[cacheid] == undefined) { API.searchAround(body, callb); }
 	else { callb(usersearchCache[cacheid]); }
 }
-
+function errorLoadingImage(elem) {
+	elem = elem.target;
+	if (elem.getAttribute("errored") == undefined) {
+		elem.setAttribute("errored", true);
+		elem.src = "images/humanface.svg";
+	}
+}
 function changeUIText(UItext) {
 	let createoviewprofile = document.getElementById("createoviewprofile");
 	let loginologout = document.getElementById("loginologout");
@@ -252,7 +258,8 @@ function changeUIText(UItext) {
 	resetmain();
 	
 	if (loggedIn) {
-		navimg.src = "images/humanface.svg";
+		navimg.src = userprofile["imageurl"];
+		navimg.addEventListener("error", errorLoadingImage);
 		loginologout.innerHTML = lang.getText().LNK_LOGOUT;
 		loginologout.href = url + "/logout";
 		createoviewprofile.style.display = "block";
@@ -341,8 +348,8 @@ function init() {
 			loggedIn = true;
 			if (!state.info) { //user has profile
 				hasProfile = true;
-				userprofile = state;
 			}
+			userprofile = state;
 		}
 		changeLang();
 	});

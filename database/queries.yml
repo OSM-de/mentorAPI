@@ -1,4 +1,4 @@
-createprofile: insert into profiles values (%s,Null,Null,true);
+createprofile: insert into profiles values (%s,Null,Null,true,%s);
 createcontact: insert into contact values (%s,Null,Null,Null);
 removeprofile: delete from profiles where id=%s;
 removecontact: delete from contact where id=%s;
@@ -6,6 +6,7 @@ showprofile: select * from userdetails where id=%s LIMIT 1;
 update_location: update profiles set location=%s where id=%s;
 update_displayname: update profiles set displayname=%s where id=%s;
 update_available: update profiles set available=%s where id=%s;
+update_imageurl: update profiles set imageurl=%s where id=%s;
 update_telegram: update contact set telegram=%s where id=%s;
 update_email: update contact set email=%s where id=%s;
 update_matrix: update contact set matrix=%s where id=%s;

@@ -85,11 +85,16 @@ function mentorAPI(url) {
 	
 	function myuser(To) {
 		function callb(resp) {
-			if (Object.keys(resp).length == 0) { //check emptyness
-				return To(msg["{}"]);
-			}
 			if (resp.error != undefined) { //an error occurred
 				return To(msg[resp.error]);
+			}
+			else if (Object.keys(resp).length == 0) { //check emptyness
+				return To(msg["{}"]);
+			} else if (Object.keys(resp).length == 1 && resp.imageurl) { //only image (pseudo profile)
+				let p = msg["{}"]
+				p["imageurl"] = resp["imageurl"]
+				console.log(p);
+				return To(p);
 			}
 			for (x in resp) {
 				return To(resp[x]);

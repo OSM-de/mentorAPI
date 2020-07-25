@@ -28,7 +28,7 @@ class helper():
 			query = self.conf[name]
 			cur = self.conn.cursor()
 			output = cur.mogrify(query, (param, userid)).decode("utf-8")
-		cur.close()
+			cur.close()
 		return output
 	
 	def userExists(self, userid, table):
@@ -117,11 +117,12 @@ class management():
 			self.conn = psycopg2.connect(dbconnstr)
 		except psycopg2.errors.OperationalError:
 			self.error = "DOES NOT EXIST"
-
+	
 	def alterTable(self, name, desiredCols, beloud=True):
 		query = []
 		returnedCols = []
 		desiredCols_simplified = []
+		changes = False
 		
 		if not ("id", "text") in desiredCols:
 			desiredCols = [("id", "text")] + desiredCols
@@ -136,24 +137,35 @@ class management():
 					returnedCols.append(col.name)
 		
 		for n, i in enumerate(returnedCols):
-			if i in returnedCols and not i in desiredCols_simplified:
+			colname = i[0]
+			if colname in returnedCols and not colname in desiredCols_simplified:
 				# remove from database table `name`
 				if beloud:
-					print("\033[1;31mwill remove\033[0;m {} from database table {}".format(i, name))
-				query.append(sql.SQL("ALTER TABLE {} DROP COLUMN {}").format(sql.Identifier(name), sql.Identifier(i)))
+					print("\033[1;31mwill remove\033[0;m '{}' from database table '{}'".format(i, name))
+				
+				cur = self.conn.cursor()
+				query.append(sql.SQL("ALTER TABLE {} DROP COLUMN {}").format(sql.Identifier(name), sql.Identifier(colname)).as_string(cur))
+				cur.close()
+				changes = True
 		for n, i in enumerate(desiredCols):
-			colname = i[0]
+			colname, coltype = i
 			if colname in desiredCols_simplified and not colname in returnedCols:
 				# add to database table `name`
 				if beloud:
-					print("\033[1;32mwill add\033[0;m] {} to database table {}".format(i, name))
-				query.append(sql.SQL("ALTER TABLE {} ADD {} {}").format(sql.Identifier(name), i, desiredCols[n][1]))
+					print("\033[1;32mwill add\033[0;m '{}' to database table '{}'".format(i, name))
+				
+				cur = self.conn.cursor()
+				print(colname, coltype)
+				query.append(sql.SQL("ALTER TABLE {} ADD {} {}").format(sql.Identifier(name), sql.Identifier(colname), sql.Identifier(coltype)).as_string(cur))
+				cur.close()
+				changes = True
 		
 		if len(query) > 0:
 			with self.conn:
 				with self.conn.cursor() as cursor:
 					print("executing query ('will' becomes 'do now')...")
 					cursor.execute(";\n".join(query))
+		return changes
 	
 	def executeCMD(self, query, params=()):
 		error = None

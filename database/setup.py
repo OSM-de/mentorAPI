@@ -8,7 +8,7 @@ from lib.database import management
 APIconf = {}
 queries = {"profiles": "createtable", "contact": "createtable"}
 cmds = {"createdb": """psql -c "CREATE DATABASE {};" """, "exeSQL": "psql --dbname={} --file={}"}
-sqls = {"createtable": "CREATE TABLE {} ({})", "createview": "CREATE OR REPLACE VIEW userdetails AS (SELECT {} FROM profiles FULL JOIN contact on profiles.id=contact.id where profiles.available IS TRUE);"}
+sqls = {"createtable": "CREATE TABLE {} ({})", "createview": "CREATE VIEW userdetails AS (SELECT {} FROM profiles FULL JOIN contact on profiles.id=contact.id where profiles.available IS TRUE);", "deleteview": "DROP VIEW userdetails;"}
 
 def main():
 	global APIconf, queries, cmds
@@ -43,13 +43,14 @@ def main():
 				print("\033[0;31mtable scheme not specified in mentorapi.yml!\033[0;m")
 			
 	print("syncing columns (insert/remove)...")
+	changes = False
 	for i in queries:
 		if "table_" + i in APIconf:
 			cols = copy.copy(APIconf["table_" + i])
 			for n, content in enumerate(cols):
 				colname, coltype = content.split(" ")
 				cols[n] = (colname, coltype)
-			dbhelper.alterTable(i, cols)
+			changes = dbhelper.alterTable(i, cols)
 	
 	print("generating select statement for the view creation query...")
 	select = []
@@ -64,6 +65,11 @@ def main():
 					select2.append(content[0])
 	
 	print("inserting generated select statement and execute query...")
+	print("View creation query: \033[0;33m" + sqls["createview"].format(", ".join(select)) + "\033[0;m")
+	if changes or dbhelper.tableExists("userdetails"):
+		print("dropping view first...")
+		dbhelper.executeCMD(sqls["deleteview"])
+		print("executing generated select statement...")
 	dbhelper.executeCMD(sqls["createview"].format(", ".join(select)))
 	
 	print("disconnecting from database...")

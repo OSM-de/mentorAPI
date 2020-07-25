@@ -9,6 +9,7 @@ import cherrypy, os, importlib, copy
 
 oauthProviders = {}
 APIconf = {}
+imageurls = {}
 
 class mentor(verification):
 	def __init__(self, secretserverkey):
@@ -35,16 +36,14 @@ class mentor(verification):
 			oauthSession = self.oauthCallback(plugin.getOAuthInstance(), config["accessTokenURL"], config["customerKey"], config["customerSecret"], oauth_token, oauth_verifier)
 			
 			#receive user identifier (provider dependent), provider name (provider dependent), generate user token and set it as cookie
-			usertoken = str(plugin.providerName()) + "_" + str(plugin.getUserIdentifier(oauthSession, config)) + "|" + str("/".join(self.createExpireTime()))
+			userident, imageurl = plugin.getUserIdentifier(oauthSession, config)
+			userident = str(plugin.providerName()) + "_" + userident
+			imageurls[userident] = imageurl.replace("http:", "https:", 1)
+			usertoken = userident + "|" + str("/".join(self.createExpireTime()))
 			usertoken_hash = self.generateToken(usertoken)
 			cookie = usertoken + "|" + usertoken_hash
 			
 			cherrypy.response.headers["Set-Cookie"] = "sessionId=" + cookie + "; Max-Age=" + str(60*60) + "; Path=/; HttpOnly"
-			"""cherrypy.response.cookie["sessionId"] = cookie # http://localhost:9090
-			cherrypy.response.cookie["sessionId"]["Path"] = "/"
-			cherrypy.response.cookie["sessionId"]["HttpOnly"] = True
-			cherrypy.response.cookie["sessionId"]["expires"] = 60*60*1000
-			cherrypy.response.cookie["sessionId"]["sameSite"] = "Lax"""
 			
 			self.__redirect("redirectToAfterLogin")
 	
@@ -55,13 +54,19 @@ class mentor(verification):
 			cherrypy.response.cookie[name]["Max-Age"] = 0
 	
 	def __redirect(self, name):
-		if name in cherrypy.request.cookie:
-			cherrypy.response.status = "303"
-			cherrypy.response.headers["Location"] = cherrypy.request.cookie[name]
-			self.__removeCookie(name)
-		elif name in APIconf:
+		if name in APIconf:
 			cherrypy.response.status = "303"
 			cherrypy.response.headers["Location"] = APIconf[name]
+		else:
+			return "NO REDIRECT SPECIFIED"
+	def __convertToHttps(self, url):
+		if url.lower().startswith("http:") and not url.lower().startswith("https:"):
+			return "https:" + url[5:len(url)]
+		return url
+	
+	def __deleteUserEntry(self, user):
+		if user in imageurls:
+			del imageurls[user]
 	
 	def __crossOrigin(self):
 		if "Origin" in cherrypy.request.headers:
@@ -73,8 +78,11 @@ class mentor(verification):
 	def logout(self):
 		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
-			self.__removeCookie("sessionId");
-			self.__redirect("redirectToAfterLogout");
+			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
+			
+			self.__deleteUserEntry(userid)
+			self.__removeCookie("sessionId")
+			self.__redirect("redirectToAfterLogout")
 			return "logged out"
 		else:
 			return "not logged in"
@@ -95,9 +103,12 @@ class mentor(verification):
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
 			if not self.dbapi.userExists(userid, "profiles"):
-				self.dbapi.sendToPostgres(APIconf["createprofile"], (userid,))
+				self.dbapi.sendToPostgres(APIconf["createprofile"], (userid, imageurls[userid]))
 			if not self.dbapi.userExists(userid, "contact"):
 				self.dbapi.sendToPostgres(APIconf["createcontact"], (userid,))
+			
+			#self.__deleteUserEntry(userid)
+			
 			return "OK"
 		return "not logged in"
 	
@@ -128,6 +139,8 @@ class mentor(verification):
 			if "location" in args and args["location"].find(",") > -1 and not args["location"] == "":
 				args["location"], settings = self.regiocodehelper.resolve(args["location"].split(","))
 				args["location"] = ",".join(args["location"])
+			if "imageurl" in args:
+				args["imageurl"] = self.__convertToHttps(args["imageurl"])
 			for item in args:
 				name = "update_" + item
 				query.append(self.dbapi.modifyUser(userid, name, args[item]))
@@ -141,7 +154,14 @@ class mentor(verification):
 		self.__crossOrigin()
 		if "sessionId" in cherrypy.request.cookie and self.isAuthorized(cherrypy.request.cookie["sessionId"].value):
 			userid = cherrypy.request.cookie["sessionId"].value.split("|")[0]
-			return self.dbapi.sendToPostgres(APIconf["showprofile"], (userid,))
+			profile = self.dbapi.sendToPostgres(APIconf["showprofile"], (userid,))
+			
+			if len(profile) == 0:
+				profile["imageurl"] = self.__convertToHttps(imageurls[userid])
+			else:
+				self.__deleteUserEntry(userid)
+			
+			return profile
 		return {"error": "not logged in"}
 	
 	@cherrypy.expose

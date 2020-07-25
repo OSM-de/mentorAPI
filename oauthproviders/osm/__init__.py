@@ -10,6 +10,7 @@ class provider():
 	def getUserIdentifier(self, oauthSession, config):
 		r = requests.get(url=config["userDetails"], auth=oauthSession)
 		userDetails = dom.fromstring(r.text)
-		userDetails = userDetails[0].attrib # Returns a XML unluckily, convert it to python3 object and get the attribute of the "user" XML element
-		return userDetails["id"]
+		user = userDetails[0].attrib # Returns a XML unluckily, convert it to python3 object and get the attribute of the "user" XML element
+		
+		return str(user["id"]), str(userDetails[0].find("img").get("href"))
 		

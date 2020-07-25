@@ -1,5 +1,6 @@
 table_profiles:
   - id text
+  - imageurl text
   - location text
   - displayname text
   - available bool
